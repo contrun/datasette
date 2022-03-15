@@ -1,0 +1,56 @@
+name: pocket
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "0 0 * * *"
+
+  push:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - "releases/*"
+    paths:
+      - "pocket/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Install Python dependencies
+        working-directory: ./pocket
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create auth.json with auth info
+        working-directory: ./pocket
+        run: |
+          echo "${{ secrets.POCKET_AUTH_JSON }}" | base64 -d > auth.json
+
+      - name: Run pocket-to-sqlite
+        working-directory: ./pocket
+        run: |
+          pocket-to-sqlite fetch pocket.db
+
+      - name: Commit and push if it changed
+        working-directory: ./pocket
+        run: |-
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add pocket.db
+          if git diff; then
+              git commit -m "auto: update pocket data at $(date -u)"
+              git push
+          fi
