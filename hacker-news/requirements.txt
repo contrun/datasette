@@ -1,0 +1,1 @@
+hacker-news-to-sqlite>=0.4

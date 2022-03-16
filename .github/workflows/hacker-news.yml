@@ -1,0 +1,42 @@
+name: hacker-news
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "trees in `hacker-news-to-sqlite trees hacker-news-trees-30515750-30164271.db 30515750 30164271`"
+        required: false
+        default: "trees"
+        type: "string"
+      extra-options:
+        description: "30515750 30164271 in `hacker-news-to-sqlite trees hacker-news-trees-30515750-30164271.db 30515750 30164271`"
+        required: false
+        type: "string"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.x"
+
+      - name: Save data
+        working-directory: ./hacker-news
+        run: |
+          set -xeuo pipefail
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install python-slugify
+          filename="hacker-news-$(python -m slugify ${{ github.event.inputs.command }} ${{ github.event.inputs.extra-options }}).db"
+          hacker-news-to-sqlite "${{ github.event.inputs.command }}" "$filename" ${{ github.event.inputs.extra-options }}
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: hacker-news
+          path: |
+            ./hacker-news/hacker-news*.db
