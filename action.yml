@@ -3,17 +3,18 @@ name: upload artifacts
 inputs:
   local-file-path:
     description: "path to the file to upload"
-    default: "artifact"
     required: true
     type: string
-  upload-to-github:
-    description: "whether to upload to github"
-    default: true
-    required: false
-    type: bool
   github-artifact-name:
     description: "name for github artifact"
-    default: "artifact"
+    required: false
+    type: string
+  rclone-config:
+    description: "the rclone config for private server, backend must be named remote"
+    required: false
+    type: string
+  remote-file-path:
+    description: "remote file path to put the file to be uploaded"
     required: false
     type: string
 
@@ -21,7 +22,27 @@ runs:
   using: "composite"
   steps:
     - uses: actions/upload-artifact@v3
-      if: inputs.upload-to-github
+      if: inputs.github-artifact-name != ''
       with:
         name: "${{ inputs.github-artifact-name }}"
         path: "${{ inputs.local-file-path }}"
+
+    - name: Setup nix
+      if: inputs.remote-file-path != ''
+      uses: contrun/infra@master
+      with:
+        setup-cachix: false
+        setup-qemu: false
+        free-disk-space: false
+
+    - name: Install rclone and upload
+      if: inputs.remote-file-path != ''
+      env:
+        RCLONE_CONFIG: "${{ inputs.rclone-config }}"
+      shell: bash
+      run: |
+        nix profile install 'nixpkgs#rclone'
+        tmp_file="$(mktemp -p /dev/shm/)"
+        trap "rm -f ${tmp_file@Q}" EXIT
+        echo "$RCLONE_CONFIG" > "$tmp_file"
+        rclone --config="$tmp_file" copy ${{ inputs.local-file-path }} remote:${{ inputs.remote-file-path }}

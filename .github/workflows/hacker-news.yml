@@ -38,7 +38,7 @@ jobs:
       - name: Upload artifacts
         uses: ./
         with:
-          upload-to-github: true
+          local-file-path: "./hacker-news/hacker-news*.db"
           github-artifact-name: hacker-news
-          local-file-path: |
-            ./hacker-news/hacker-news*.db
+          remote-file-path: /
+          rclone-config: "${{ secrets.RCLONE_CONFIG }}"
