@@ -35,8 +35,10 @@ jobs:
           filename="hacker-news-$(python -m slugify ${{ github.event.inputs.command }} ${{ github.event.inputs.extra-options }}).db"
           hacker-news-to-sqlite "${{ github.event.inputs.command }}" "$filename" ${{ github.event.inputs.extra-options }}
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload artifacts
+        uses: ./
         with:
-          name: hacker-news
-          path: |
+          upload-to-github: true
+          github-artifact-name: hacker-news
+          local-file-path: |
             ./hacker-news/hacker-news*.db

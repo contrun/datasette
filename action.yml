@@ -1,0 +1,27 @@
+name: upload artifacts
+
+inputs:
+  local-file-path:
+    description: "path to the file to upload"
+    default: "artifact"
+    required: true
+    type: string
+  upload-to-github:
+    description: "whether to upload to github"
+    default: true
+    required: false
+    type: bool
+  github-artifact-name:
+    description: "name for github artifact"
+    default: "artifact"
+    required: false
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/upload-artifact@v3
+      if: inputs.upload-to-github
+      with:
+        name: "${{ inputs.github-artifact-name }}"
+        path: "${{ inputs.local-file-path }}"

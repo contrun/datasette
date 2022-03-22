@@ -31,14 +31,16 @@ jobs:
       - name: Save data
         working-directory: ./pocket
         env:
-          POCKET_AUTH_JSON_BASE64: "${{ secrets.POCKET_AUTH_JSON }}" 
+          POCKET_AUTH_JSON_BASE64: "${{ secrets.POCKET_AUTH_JSON }}"
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           echo "$POCKET_AUTH_JSON_BASE64" | base64 -d > auth.json
           pocket-to-sqlite fetch pocket.db
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload artifacts
+        uses: ./
         with:
-          name: pocket
-          path: ./pocket/pocket.db
+          upload-to-github: true
+          github-artifact-name: pocket
+          local-file-path: ./pocket/pocket.db
