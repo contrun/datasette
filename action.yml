@@ -10,7 +10,12 @@ inputs:
     required: false
     type: string
   rclone-config:
-    description: "the rclone config for private server, backend must be named remote"
+    description: "the rclone config for private servers"
+    required: false
+    type: string
+  rclone-backends:
+    description: "the rclone backends to upload to, separated by comma"
+    default: "remote"
     required: false
     type: string
   remote-file-path:
@@ -45,4 +50,4 @@ runs:
         tmp_file="$(mktemp -p /dev/shm/)"
         trap "rm -f ${tmp_file@Q}" EXIT
         echo "$RCLONE_CONFIG" > "$tmp_file"
-        rclone --config="$tmp_file" copy ${{ inputs.local-file-path }} remote:${{ inputs.remote-file-path }}
+        echo "${{ inputs.rclone-backends }}" | tr ',' ' ' | xargs -r -n 1 -P 10 -I __BACKEND__ rclone --config="$tmp_file" copy ${{ inputs.local-file-path }} __BACKEND__:${{ inputs.remote-file-path }}
